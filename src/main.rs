@@ -3,7 +3,7 @@ use std::io;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    const SOCKET_PATH: &str = "/tmp/socket_in.sock";
+    const SOCKET_PATH: &str = "/tmp/socket_data.sock";
     const BUFFER_SIZE: usize = 200_000;
 
     let client_socket = UnixDatagram::unbound().unwrap();
