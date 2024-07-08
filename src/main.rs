@@ -1,16 +1,21 @@
 use tokio::net::UnixDatagram;
 use std::io;
+use tokio::io::Interest;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    const SOCKET_PATH: &str = "/home/user/RustroverProjects/server/data-volume/socket_data.sock";
+    const SOCKET_PATH: &str = "/tmp/socket_data.sock";
+    const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
     const BUFFER_SIZE: usize = 212_765;
 
     let client_socket = UnixDatagram::unbound().unwrap();
+    let socket_result = UnixDatagram::unbound().unwrap();
     client_socket.connect(SOCKET_PATH)?;
+    socket_result.connect(SOCKET_RESULT_PATH)?;
 
     let mut buffer = vec![0; BUFFER_SIZE];
     let mut next_pkt_num = 0;
+    let mut buf = vec![0; 10];
 
     for i in 0..BUFFER_SIZE {
         buffer[i] = i as u8;
@@ -42,7 +47,11 @@ async fn main() -> io::Result<()> {
                 return Err(e);
             }
         }
-    }
 
+        let len = socket_result.recv(&mut buf);
+        //println!("!!!!!!!!!!!!!!!!!{}", len);
+
+
+    }
     Ok(())
 }
