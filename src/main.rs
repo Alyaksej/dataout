@@ -1,16 +1,15 @@
 use tokio::net::UnixDatagram;
 use std::{fs, io};
-use tokio::io::Interest;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    const SOCKET_DATA_PATH: &str = "/tmp/socket_data.sock";
-    const SOCKET_RESULT_PATH: &str = "/tmp/socket_result.sock";
+    const SOCKET_DATA_PATH: &str = "/app/data-volume/socket_data.sock";
+    const SOCKET_RESULT_PATH: &str = "/app/data-volume/socket_result.sock";
     const BUFFER_SIZE: usize = 212_765;
-
+    // Remove socket before start
     if fs::metadata(SOCKET_RESULT_PATH).is_ok() {
         if let Err(e) = fs::remove_file(SOCKET_RESULT_PATH) {
-            eprintln!("Error removing socket file: {}", e);
+            eprintln!("Error removing socket result file: {}", e);
             return Err(e);
         }
     };
@@ -18,7 +17,7 @@ async fn main() -> io::Result<()> {
     let socket_result = match UnixDatagram::bind(SOCKET_RESULT_PATH) {
         Ok(socket_result) => socket_result,
         Err(e) => {
-            eprintln!("Error binding socket data: {}", e);
+            eprintln!("Error binding socket result: {}", e);
             return Err(e);
         }
     };
@@ -33,11 +32,8 @@ async fn main() -> io::Result<()> {
         buffer[i] = i as u8;
     }
     loop {
-        // Wait for the socket to be writable
         socket_data.writable().await?;
 
-        // Try to send data, this may still fail with `WouldBlock`
-        // if the readiness event is a false positive.
         match socket_data.try_send_to(&buffer, SOCKET_DATA_PATH) {
             Ok(n) => {
                 buffer[0] = next_pkt_num;
